@@ -1,0 +1,59 @@
+{% extends 'todo_app/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <h2>Edit Todo</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="title" name="title" value="{{ todo.title }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3">{{ todo.description }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label for="priority" class="form-label">Priority</label>
+                <select class="form-select" id="priority" name="priority">
+                    <option value="1" {% if todo.priority == 1 %}selected{% endif %}>Low Priority</option>
+                    <option value="2" {% if todo.priority == 2 %}selected{% endif %}>Medium Priority</option>
+                    <option value="3" {% if todo.priority == 3 %}selected{% endif %}>High Priority</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="category" class="form-label">Category</label>
+                <select name="category" id="category" class="form-select">
+                    <option value="">No Category</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if todo.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                    {% endfor %}
+                    <option value="new">+ New Category</option>
+                </select>
+            </div>
+            <div id="newCategoryInput" class="mb-3" style="display: none;">
+                <label for="new_category" class="form-label">New Category Name</label>
+                <input type="text" class="form-control" id="new_category" name="new_category">
+            </div>
+            <div class="mb-3">
+                <label for="due_date" class="form-label">Due Date</label>
+                <input type="datetime-local" class="form-control" id="due_date" name="due_date" value="{{ todo.due_date|date:'Y-m-d\TH:i' }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="{% url 'todo_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+<script>
+document.querySelector('select[name="category"]').addEventListener('change', function() {
+    const newCategoryInput = document.getElementById('newCategoryInput');
+    if (this.value === 'new') {
+        newCategoryInput.style.display = 'block';
+    } else {
+        newCategoryInput.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}
