@@ -1,0 +1,64 @@
+<!-- Pomodoro Stats Modal -->
+<div class="modal fade" id="pomodoroStatsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pomodoro Statistics</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Overview</h6>
+                                <p>Total Sessions: <span id="totalSessions">0</span></p>
+                                <p>Completed Sessions: <span id="completedSessions">0</span></p>
+                                <p>Total Work Time: <span id="totalWorkTime">0</span> minutes</p>
+                                <p>Completion Rate: <span id="completionRate">0</span>%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Sessions by Type</h6>
+                                <canvas id="sessionTypeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">Most Productive Tasks</h6>
+                                <div class="table-responsive">
+                                    <table class="table" id="taskStatsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Task</th>
+                                                <th>Sessions</th>
+                                                <th>Total Time (min)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary" onclick="loadStats(7)">Last 7 Days</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="loadStats(30)">Last 30 Days</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="loadStats(90)">Last 90 Days</button>
+                </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

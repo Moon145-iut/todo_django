@@ -1,12 +1,18 @@
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, permissions, filters
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .serializers import TodoSerializer
-from .models import Todo, Category
+from django.http import JsonResponse
+from django.db.models import Count, Avg, Sum
+from django.utils import timezone
+from datetime import timedelta
+from rest_framework import viewsets, permissions, filters, status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Todo, Category, PomodoroSession, PomodoroSettings, SubTask, Note
+from .serializers import TodoSerializer, PomodoroSettingsSerializer, PomodoroSessionSerializer, SubTaskSerializer, NoteSerializer
 
 class TodoViewSet(viewsets.ModelViewSet):
     queryset = Todo.objects.all()
@@ -26,6 +32,99 @@ class TodoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+@login_required
+def pomodoro_settings(request):
+    settings, created = PomodoroSettings.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        serializer = PomodoroSettingsSerializer(settings, data=request.POST)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data)
+    return JsonResponse(PomodoroSettingsSerializer(settings).data)
+
+@login_required
+def start_pomodoro(request, todo_id=None):
+    if request.method == 'POST':
+        import json
+        data = json.loads(request.body)
+        session_type = data.get('session_type', 'work')
+        duration = int(data.get('duration', 25))
+        
+        # End any active sessions
+        PomodoroSession.objects.filter(
+            user=request.user,
+            completed=False,
+            end_time__isnull=True
+        ).update(interrupted=True, end_time=timezone.now())
+        
+        # Create new session
+        session = PomodoroSession.objects.create(
+            user=request.user,
+            todo_id=todo_id,
+            duration=duration,
+            session_type=session_type,
+            start_time=timezone.now()
+        )
+        return JsonResponse({
+            'id': session.id,
+            'duration': session.duration,
+            'session_type': session.session_type
+        })
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@login_required
+def complete_pomodoro(request, session_id):
+    if request.method == 'POST':
+        session = get_object_or_404(PomodoroSession, id=session_id, user=request.user)
+        if not session.completed:
+            session.completed = True
+            session.end_time = timezone.now()
+            session.save()
+        return JsonResponse({
+            'id': session.id,
+            'completed': session.completed,
+            'duration': session.duration
+        })
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@login_required
+def get_pomodoro_stats(request):
+    # Get date range
+    days = int(request.GET.get('days', 7))
+    start_date = timezone.now() - timedelta(days=days)
+    
+    # Get sessions in date range
+    sessions = PomodoroSession.objects.filter(
+        user=request.user,
+        start_time__gte=start_date
+    )
+    
+    # Calculate statistics
+    completed_sessions = sessions.filter(completed=True)
+    stats = {
+        'total_sessions': sessions.count(),
+        'completed_sessions': completed_sessions.count(),
+        'total_work_time': completed_sessions.aggregate(
+            total=Sum('duration'))['total'] or 0,
+        'average_completion_rate': (
+            completed_sessions.count() * 100 / max(sessions.count(), 1)
+        ),
+        'sessions_by_type': {
+            session_type: count
+            for session_type, count in sessions.values_list('session_type')
+            .annotate(count=Count('id'))
+        },
+        'sessions_by_todo': {
+            title: count
+            for title, count in sessions.exclude(todo=None)
+            .values_list('todo__title')
+            .annotate(count=Count('id'))
+        }
+    }
+    
+    return JsonResponse(stats)
 
 @login_required
 def todo_list(request):
@@ -70,9 +169,11 @@ def todo_list(request):
     if category:
         todos = todos.filter(category_id=category)
     
+    settings, created = PomodoroSettings.objects.get_or_create(user=request.user)
     return render(request, 'todo_app/todo_list.html', {
         'todos': todos,
         'categories': categories,
+        'pomodoro_settings': settings,
     })
 
 @login_required
@@ -149,3 +250,63 @@ def register(request):
         return redirect('todo_list')
 
     return render(request, 'todo_app/register.html')
+
+
+@api_view(['POST'])
+@login_required
+def add_subtask(request, todo_id):
+    todo = get_object_or_404(Todo, id=todo_id, user=request.user)
+    serializer = SubTaskSerializer(data={**request.data, 'todo': todo_id})
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@login_required
+def toggle_subtask(request, subtask_id):
+    subtask = get_object_or_404(SubTask, id=subtask_id, todo__user=request.user)
+    subtask.completed = not subtask.completed
+    subtask.save()
+    return Response(SubTaskSerializer(subtask).data)
+
+@api_view(['DELETE'])
+@login_required
+def delete_subtask(request, subtask_id):
+    subtask = get_object_or_404(SubTask, id=subtask_id, todo__user=request.user)
+    subtask.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET', 'POST'])
+@login_required
+def notes_list(request):
+    if request.method == 'GET':
+        notes = Note.objects.filter(user=request.user)
+        serializer = NoteSerializer(notes, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = NoteSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+@login_required
+def note_detail(request, note_id):
+    note = get_object_or_404(Note, id=note_id, user=request.user)
+    
+    if request.method == 'GET':
+        serializer = NoteSerializer(note)
+        return Response(serializer.data)
+    
+    elif request.method == 'PUT':
+        serializer = NoteSerializer(note, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == 'DELETE':
+        note.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

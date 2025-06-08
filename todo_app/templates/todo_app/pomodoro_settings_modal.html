@@ -1,0 +1,53 @@
+<!-- Pomodoro Settings Modal -->
+<div class="modal fade" id="pomodoroSettingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pomodoro Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="pomodoroSettingsForm">
+                    <div class="mb-3">
+                        <label for="workDuration" class="form-label">Work Duration (minutes)</label>
+                        <input type="number" class="form-control" id="workDuration" name="work_duration" 
+                               value="{{ pomodoro_settings.work_duration }}" min="1" max="60">
+                    </div>
+                    <div class="mb-3">
+                        <label for="shortBreakDuration" class="form-label">Short Break Duration (minutes)</label>
+                        <input type="number" class="form-control" id="shortBreakDuration" name="short_break_duration" 
+                               value="{{ pomodoro_settings.short_break_duration }}" min="1" max="30">
+                    </div>
+                    <div class="mb-3">
+                        <label for="longBreakDuration" class="form-label">Long Break Duration (minutes)</label>
+                        <input type="number" class="form-control" id="longBreakDuration" name="long_break_duration" 
+                               value="{{ pomodoro_settings.long_break_duration }}" min="1" max="60">
+                    </div>
+                    <div class="mb-3">
+                        <label for="longBreakInterval" class="form-label">Sessions Before Long Break</label>
+                        <input type="number" class="form-control" id="longBreakInterval" name="long_break_interval" 
+                               value="{{ pomodoro_settings.long_break_interval }}" min="1" max="10">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="notificationSound" name="notification_sound"
+                                   {% if pomodoro_settings.notification_sound %}checked{% endif %}>
+                            <label class="form-check-label" for="notificationSound">Enable Sound Notifications</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="desktopNotification" name="desktop_notification"
+                                   {% if pomodoro_settings.desktop_notification %}checked{% endif %}>
+                            <label class="form-check-label" for="desktopNotification">Enable Desktop Notifications</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveSettings">Save Settings</button>
+            </div>
+        </div>
+    </div>
+</div>

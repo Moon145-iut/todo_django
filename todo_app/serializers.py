@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Todo, Category
+from .models import Todo, Category, PomodoroSession, PomodoroSettings, SubTask, Note
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,3 +26,29 @@ class TodoSerializer(serializers.ModelSerializer):
         instance.tags = validated_data.get('tags', instance.tags)
         instance.save()
         return instance
+
+class PomodoroSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PomodoroSettings
+        fields = ['work_duration', 'short_break_duration', 'long_break_duration',
+                 'long_break_interval', 'notification_sound', 'desktop_notification']
+
+class PomodoroSessionSerializer(serializers.ModelSerializer):
+    todo_title = serializers.CharField(source='todo.title', read_only=True)
+    
+    class Meta:
+        model = PomodoroSession
+        fields = ['id', 'todo', 'todo_title', 'start_time', 'end_time', 'duration',
+                 'session_type', 'completed', 'interrupted']
+
+class SubTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubTask
+        fields = ['id', 'todo', 'title', 'completed', 'created_at']
+        read_only_fields = ['created_at']
+
+class NoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Note
+        fields = ['id', 'title', 'content', 'topic', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
