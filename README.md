@@ -1,20 +1,35 @@
-# Django Todo Application
+# Django Todo Application with Pomodoro Timer
 
-A feature-rich todo application built with Django and Django REST Framework. This application allows users to manage their tasks with categories, priorities, and filtering capabilities.
+A feature-rich todo application built with Django that includes:
+- Task management with categories and priorities
+- Subtasks for better task organization
+- Pomodoro timer with customizable settings
+- Note-taking system with topic organization
+- Comprehensive statistics tracking
 
 ## Features
 
+### Task Management
 - User Authentication (Register/Login)
 - Create, Read, Update, and Delete todos
 - Categorize todos (Study, Work, Personal, etc.)
 - Priority levels (Low, Medium, High)
-- Filter todos by:
-  - Status (All/Active/Completed)
-  - Priority (All/High/Medium/Low)
-  - Category
-- Custom category creation
-- RESTful API endpoints
-- Responsive UI with Bootstrap
+- Subtasks support for complex todos
+- Filter todos by status, priority, and category
+
+### Pomodoro Timer
+- Customizable work/break durations
+- Session tracking
+- Task association
+- Statistics and productivity metrics
+- Desktop notifications
+- Sound alerts
+
+### Notes System
+- Topic-based organization
+- Rich text editor
+- Quick search functionality
+- Sidebar access for easy note-taking
 
 ## Prerequisites
 
