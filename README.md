@@ -63,8 +63,7 @@ python manage.py runserver
 
 2. Open your web browser and navigate to:
 - Main application: http://127.0.0.1:8000/
-- Admin interface: http://127.0.0.1:8000/admin/
-- API endpoints: http://127.0.0.1:8000/api/
+
 
 ## Usage
 
